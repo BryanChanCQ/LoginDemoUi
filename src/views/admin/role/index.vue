@@ -76,7 +76,7 @@
 
     <div class="pagination-container">
       <el-pagination
-        :current-page="listQuery.page"
+        :current-page="listQuery.page+1"
         :page-sizes="[10,30,50]"
         :page-size="listQuery.limit"
         :total="total"
@@ -120,7 +120,7 @@ export default {
       role: '',
       errorPath: '/errorPage/404',
       listQuery: {
-        page: 1,
+        page: 0,
         limit: 10,
         sort: 'asc',
         name: ''
@@ -141,19 +141,19 @@ export default {
   },
   methods: {
     handleSizeChange(val) {
-      this.listQuery.limit = val
+      this.listQuery.pageSize = val
       this.getList()
     },
     handleCurrentChange(val) {
-      this.listQuery.page = val
+      this.listQuery.page = val - 1
       this.getList()
     },
     getList() {
       this.listLoading = true
       getList(this.listQuery)
         .then(response => {
-          this.list = response.data.data.list
-          this.total = response.data.data.total
+          this.list = response.data.data.content
+          this.total = response.data.data.totalElements
           setTimeout(() => {
             this.listLoading = false
           }, 200)
@@ -223,7 +223,7 @@ export default {
       }
     },
     handleFilter() {
-      this.listQuery.page = 1
+      this.listQuery.page = 0
       this.listQuery.name = this.role
       this.getList()
     },

@@ -103,7 +103,7 @@ export default {
       errorPath: '/errorPage/404',
       saveDisabled: true,
       listQuery: {
-        page: 1,
+        page: 0,
         pageSize: 100,
         sort: 'asc'
       }
@@ -126,7 +126,7 @@ export default {
       this.listLoading = true
       getList(this.listQuery)
         .then(response => {
-          this.convertToTree(response.data.data.list)
+          this.convertToTree(response.data.data.content)
           this.listLoading = false
         })
         .catch(error => {

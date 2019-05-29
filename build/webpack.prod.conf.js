@@ -56,7 +56,9 @@ const webpackConfig = merge(baseWebpackConfig, {
       inject: true,
       favicon: resolve('favicon.ico'),
       title: 'vue-element-admin',
-      path: config.build.assetsPublicPath + config.build.assetsSubDirectory,
+      templateParameters: {
+        BASE_URL: config.build.assetsPublicPath + config.build.assetsSubDirectory,
+      },
       minify: {
         removeComments: true,
         collapseWhitespace: true,
@@ -90,7 +92,15 @@ const webpackConfig = merge(baseWebpackConfig, {
       }
     }),
     // keep module.id stable when vender modules does not change
-    new webpack.HashedModuleIdsPlugin()
+    new webpack.HashedModuleIdsPlugin(),
+    // copy custom static assets
+    new CopyWebpackPlugin([
+      {
+        from: path.resolve(__dirname, '../static'),
+        to: config.build.assetsSubDirectory,
+        ignore: ['.*']
+      }
+    ])
   ],
   optimization: {
     splitChunks: {
@@ -108,7 +118,7 @@ const webpackConfig = merge(baseWebpackConfig, {
           test: /[\\/]node_modules[\\/]element-ui[\\/]/
         },
         commons: {
-          name: 'chunk-comomns',
+          name: 'chunk-commons',
           test: resolve('src/components'), // 可自定义拓展你的规则
           minChunks: 3, // 最小公用次数
           priority: 5,
@@ -140,7 +150,6 @@ if (config.build.productionGzip) {
 
   webpackConfig.plugins.push(
     new CompressionWebpackPlugin({
-      asset: '[path].gz[query]',
       algorithm: 'gzip',
       test: new RegExp(
         '\\.(' + config.build.productionGzipExtensions.join('|') + ')$'

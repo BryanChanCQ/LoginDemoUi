@@ -69,13 +69,10 @@ const permission = {
           console.info('getMenuByRoleIds:')
           let menus = []
           parseMenus(menus, response.data.data, 0)
-          debugger
           menus = concatDashBoard(menus)
-          debugger
           console.info(menus)
           const page404 = { path: '*', redirect: '/404', hidden: true }
           menus.push(page404)
-          debugger
           commit('SET_ROUTERS', menus)
           resolve()
         }).catch(error => {
@@ -153,9 +150,7 @@ function parseMenus(menus, arr, count) {
           // page.component = _import(arr[i].url)
           let component = null
           try {
-            debugger
             component = _import(arr[i].url)
-            debugger
           } catch (e) {
             return
           }

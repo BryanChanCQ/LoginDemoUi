@@ -57,7 +57,7 @@
 
     <div class="pagination-container">
       <el-pagination
-        :current-page="listQuery.page"
+        :current-page="listQuery.page + 1"
         :page-sizes="[10,30,50]"
         :page-size="listQuery.limit"
         :total="total"
@@ -148,7 +148,7 @@ export default {
       username: '',
       errorPath: '/errorPage/404',
       listQuery: {
-        page: 1,
+        page: 0,
         limit: 10,
         sort: 'asc'
       },
@@ -186,11 +186,11 @@ export default {
   },
   methods: {
     handleSizeChange(val) {
-      this.listQuery.limit = val
+      this.listQuery.pageSize = val
       this.getList()
     },
     handleCurrentChange(val) {
-      this.listQuery.page = val
+      this.listQuery.page = val - 1
       this.getList()
     },
     onRoleSelectChange(id) {
@@ -213,13 +213,14 @@ export default {
       this.listLoading = true
       getList(this.listQuery)
         .then(response => {
-          this.list = response.data.data.list
-          this.total = response.data.data.total
+          this.list = response.data.data.content
+          this.total = response.data.data.totalElements
           setTimeout(() => {
             this.listLoading = false
           }, 200)
         })
         .catch(error => {
+          debugger
           if (error.response === undefined) {
             this.$router.push({ path: this.errorPath })
           } else {
@@ -232,6 +233,7 @@ export default {
       })
 
       queryUsers({}).then(response => {
+        debugger
         this.users = response.data.data
       })
     },
@@ -293,7 +295,7 @@ export default {
       }
     },
     handleFilter() {
-      this.listQuery.page = 1
+      this.listQuery.page = 0
       this.listQuery.userName = this.username
       this.getList()
     },

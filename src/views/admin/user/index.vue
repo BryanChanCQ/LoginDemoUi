@@ -22,14 +22,6 @@
         type="primary"
         size="small"
         class="filter-item"
-        icon="el-icon-search"
-        @click="tiaozhuan"
-      >tiaozhuan</el-button>
-      <el-button
-        v-waves
-        type="primary"
-        size="small"
-        class="filter-item"
         style="margin-left: 10px;"
         icon="el-icon-plus"
         @click="handleCreate"
@@ -71,7 +63,7 @@
 
     <div class="pagination-container">
       <el-pagination
-        :current-page="listQuery.page"
+        :current-page="listQuery.page + 1"
         :page-sizes="[10,30,50]"
         :page-size="listQuery.limit"
         :total="total"
@@ -180,7 +172,7 @@ export default {
       title: '',
       errorPath: '/errorPage/404',
       listQuery: {
-        page: 1,
+        page: 0,
         limit: 10,
         sort: 'asc'
       },
@@ -220,19 +212,19 @@ export default {
   },
   methods: {
     handleSizeChange(val) {
-      this.listQuery.limit = val
+      this.listQuery.pageSize = val
       this.getList()
     },
     handleCurrentChange(val) {
-      this.listQuery.page = val
+      this.listQuery.page = val - 1
       this.getList()
     },
     getList() {
       this.listLoading = true
       getList(this.listQuery)
         .then(response => {
-          this.list = response.data.data.list
-          this.total = response.data.data.total
+          this.list = response.data.data.content
+          this.total = response.data.data.totalElements
           setTimeout(() => {
             this.listLoading = false
           }, 200)
@@ -266,7 +258,6 @@ export default {
       if (this.userForm.method === 'add') {
         this.$refs.userForm.validate(valid => {
           if (valid) {
-            this.userForm.id = 19
             addUser(this.userForm)
               .then(response => {
                 this.userDialogVisible = false
@@ -299,6 +290,7 @@ export default {
             const editUserParam = {
               id: this.userForm.id,
               displayName: this.userForm.displayName,
+              username: this.userForm.username,
               enabled: this.userForm.enabled,
               password: this.userForm.newPassword
             }
@@ -324,12 +316,9 @@ export default {
       }
     },
     handleFilter() {
-      this.listQuery.page = 1
+      this.listQuery.page = 0
       this.listQuery.username = this.username
       this.getList()
-    },
-    tiaozhuan() {
-      this.$router.push({ path: '/404' })
     },
     handleSelectChange(val) {
       this.currentRow = val
