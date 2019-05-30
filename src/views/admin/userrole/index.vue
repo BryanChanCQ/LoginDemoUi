@@ -220,7 +220,6 @@ export default {
           }, 200)
         })
         .catch(error => {
-          debugger
           if (error.response === undefined) {
             this.$router.push({ path: this.errorPath })
           } else {
@@ -233,7 +232,6 @@ export default {
       })
 
       queryUsers({}).then(response => {
-        debugger
         this.users = response.data.data
       })
     },

@@ -18,6 +18,7 @@ service.interceptors.request.use(
     if (token !== undefined) {
       // 让每个请求携带token-- ['X-Token']为自定义key 请根据实际情况自行修改
       config.headers['jwtHeader'] = token
+      config.headers['Content-Typ'] = 'application/json;charset=UTF-8'
     } else {
       console.info('no token')
     }

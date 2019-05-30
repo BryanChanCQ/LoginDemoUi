@@ -217,7 +217,6 @@ export default {
     this.getList()
     queryRoles({ page: 0, pageSize: 100 })
       .then(response => {
-        debugger
         this.roles = response.data.data.content
       })
       .catch(error => {
@@ -229,7 +228,6 @@ export default {
       })
     queryResources({ page: 0, pageSize: 100 })
       .then(response => {
-        debugger
         this.resources = response.data.data.content
       })
       .catch(error => {

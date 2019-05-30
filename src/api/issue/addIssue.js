@@ -30,3 +30,27 @@ export function uploadAttechmentFile() {
     method: 'post'
   })
 }
+
+export function getUploadFileList(data) {
+  return request({
+    url: '/Issue/getUploadFileList',
+    method: 'get',
+    params: data
+  })
+}
+
+export function deleteUploadFile(data) {
+  return request({
+    url: '/Issue/deleteUploadFile',
+    method: 'get',
+    params: data
+  })
+}
+
+export function downloadAttachmentFile(data) {
+  return request({
+    url: '/Issue/downloadAttachmentFile',
+    method: 'get',
+    params: data
+  })
+}

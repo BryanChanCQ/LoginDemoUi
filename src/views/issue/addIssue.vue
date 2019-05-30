@@ -76,7 +76,7 @@
         />
       </div>
     </div>
-    <el-dialog :visible.sync="showIssueDialog" :title="dialogTitle" width="60%">
+    <el-dialog :visible.sync="showIssueDialog" :title="dialogTitle" width="45%">
       <el-form ref="issueForm" :model="issueForm" :rules="rules" size="medium">
         <table class="gridtable">
           <tbody>
@@ -179,6 +179,9 @@
                     :headers="headers"
                     :data="testData"
                     :auto-upload="false"
+                    :file-list="uploadFileList"
+                    :on-remove="deleteUploadFile"
+                    :on-preview = "downloadAttachmentFile"
                     list-type="text"
                     class="upload-demo"
                     action="http://localhost:9088/Issue/uploadAttechmentFile"
@@ -190,11 +193,7 @@
                       type="success"
                       @click="submitUpload"
                     >上传到服务器</el-button>
-                    <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
                   </el-upload>
-                  <!--<el-upload :headers="headers" :data="testData" list-type="text" class="upload-demo" action="http://localhost:9088/Issue/uploadAttechmentFile" multiple>
-                    <i class="el-icon-upload"/>
-                  </el-upload>-->
                 </el-form-item>
               </td>
             </tr>
@@ -211,23 +210,6 @@
         </table>
       </el-form>
     </el-dialog>
-
-    <el-dialog :visible.sync="showUploadDialog" :title="dialogTitle" width="60%">
-      <el-upload
-        :headers="headers"
-        list-type="text"
-        class="upload-demo"
-        action="http://localhost:9088/Issue/uploadAttechmentFile"
-        multiple
-      >
-        <i class="el-icon-upload"/>
-        <!-- <el-button size="small" type="primary">点击上传</el-button> -->
-        <!-- <div class="el-upload__text">
-          将文件拖到此处，或
-          <em>点击上传</em>
-        </div>-->
-      </el-upload>
-    </el-dialog>
   </div>
 </template>
 
@@ -239,7 +221,10 @@ import {
   getList,
   addIssue,
   submitIssue,
-  uploadAttechmentFile
+  uploadAttechmentFile,
+  getUploadFileList,
+  deleteUploadFile,
+  downloadAttachmentFile
 } from '@/api/issue/addIssue'
 export default {
   name: 'AddIssue',
@@ -260,6 +245,7 @@ export default {
       headers: {
         jwtHeader: Cookies.get('jwtHeader')
       },
+      uploadFileList: [],
       list: null,
       listLoading: true,
       dialogTitle: '',
@@ -270,6 +256,10 @@ export default {
       },
       testData: {
         id: ''
+      },
+      fileObj: {
+        name: '',
+        url: ''
       },
       issueForm: {
         issueIdentifier: '',
@@ -295,7 +285,6 @@ export default {
       this.listLoading = true
       getList(this.listQuery)
         .then(response => {
-          debugger
           this.list = response.data.data.content
           this.total = response.data.data.totalElements
           setTimeout(() => {
@@ -318,6 +307,48 @@ export default {
       this.testData.id = this.issueForm.issueIdentifier
       this.$refs.upload.submit()
     },
+    deleteUploadFile(file, fileList) {
+      console.log(file)
+      deleteUploadFile({ fileUrl: file.url, id: file.id })
+        .then(response => {
+          console.log('success')
+        })
+        .catch(error => {
+          if (error.response === undefined) {
+            this.$router.push({ path: this.errorPath })
+          } else {
+            this.$message.error(error.response.data.message)
+          }
+        })
+    },
+    downloadAttachmentFile(file) {
+      debugger
+      downloadAttachmentFile({ fileUrl: file.url })
+        .then(response => {
+          debugger
+          console.log('success')
+          if (!response) {
+            return
+          }
+          const blob = new Blob([response.data], { type: 'application/octet-stream;charset=utf-8' })
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.style.display = 'none'
+          link.href = url
+          // 获取文件名
+          let fileName = null
+          debugger
+          if (file.url.indexOf('/') !== -1) {
+            fileName = file.url.substring(file.url.lastIndexOf('/') + 1)
+          } else {
+            fileName = file.url
+          }
+          // download 属性定义了下载链接的地址而不是跳转路径
+          link.setAttribute('download', fileName)
+          document.body.appendChild(link)
+          link.click()
+        })
+    },
     handleCurrentChange(val) {
       this.listQuery.page = val
       this.getList()
@@ -339,6 +370,7 @@ export default {
     handleCreate() {
       this.showIssueDialog = true
       this.dialogTitle = '新增问题'
+      this.fileList = []
       this.issueForm = {
         issueIdentifier: 'QC' + new Date().getTime(),
         institution: '',
@@ -361,13 +393,38 @@ export default {
       this.dialogTitle = '修改问题'
       this.issueForm = Object.assign({}, row)
       this.issueForm.method = 'edit'
+      this.uploadFileList = []
+      getUploadFileList({ issueIdentifier: row.issueIdentifier })
+        .then(response => {
+          this.convertUploadFileList(response.data.data)
+        })
+        .catch(error => {
+          debugger
+          if (error.response === undefined) {
+            this.$router.push({ path: this.errorPath })
+          } else {
+            this.$message.error(error.response.data.message)
+          }
+        })
       this.$nextTick(function() {
         this.$refs.issueForm.clearValidate()
       })
     },
+    convertUploadFileList(list) {
+      for (var i = 0; i < list.length; i++) {
+        const fileObj = {
+          id: '',
+          name: '',
+          url: ''
+        }
+        fileObj.id = list[i].id
+        fileObj.name = list[i].attachmentName
+        fileObj.url = list[i].attachmentPath
+        this.uploadFileList.push(fileObj)
+      }
+    },
     saveIssue() {
       if (this.issueForm.method === 'add') {
-        debugger
         addIssue(this.issueForm)
           .then(response => {
             this.showIssueDialog = false
@@ -402,7 +459,6 @@ export default {
         })
     },
     uploadAttechmentFile() {
-      debugger
       uploadAttechmentFile()
         .then(response => {
           this.$message.success('提交成功')
