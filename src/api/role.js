@@ -62,3 +62,11 @@ export function deleteRoleById(data) {
     params: data
   })
 }
+
+export function queryParentRole() {
+  return request({
+    url: '/BaseController/queryParentRole',
+    method: 'get'
+  })
+}
+

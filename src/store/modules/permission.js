@@ -73,6 +73,7 @@ const permission = {
           console.info(menus)
           const page404 = { path: '*', redirect: '/404', hidden: true }
           menus.push(page404)
+          debugger
           commit('SET_ROUTERS', menus)
           resolve()
         }).catch(error => {
@@ -208,6 +209,7 @@ function addMenu(menu, menus, notAddedMenus) {
     let i = 0
     for (; i < menus.length; ++i) {
       // parent已经加入到菜单
+      debugger
       if (menu.parentId === menus[i].id) {
         menus[i].children.push(menu)
         break

@@ -223,6 +223,7 @@ export default {
       this.listLoading = true
       getList(this.listQuery)
         .then(response => {
+          debugger
           this.list = response.data.data.content
           this.total = response.data.data.totalElements
           setTimeout(() => {

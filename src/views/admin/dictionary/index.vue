@@ -2,11 +2,11 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input
-        v-model="role"
+        v-model="dictionaryForm.name"
         size="small"
         style="width: 200px;"
         class="filter-item"
-        placeholder="角色名"
+        placeholder="配置名"
         @keyup.enter.native="handleFilter"
       />
       <el-button
@@ -27,7 +27,6 @@
         @click="handleCreate"
       >新增</el-button>
     </div>
-
     <el-table
       v-loading="listLoading"
       ref="singleTable"
@@ -37,46 +36,32 @@
       fit
       highlight-current-row
     >
-      <el-table-column align="center" label="角色名">
+      <el-table-column align="center" label="父配置名">
+        <template slot-scope="scope">
+          <span>{{ scope.row.parentName }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" label="配置名">
         <template slot-scope="scope">
           <span>{{ scope.row.name }}</span>
         </template>
       </el-table-column>
+      <el-table-column align="center" label="配置值">
+        <template slot-scope="scope">
+          <span>{{ scope.row.key }}</span>
+        </template>
+      </el-table-column>
       <el-table-column align="center" label="操作">
         <template slot-scope="scope">
-          <el-button
-            v-if="scope.row.name === 'superuser'"
-            disabled
-            type="primary"
-            size="small"
-            @click="handleEdit(scope.row)"
-          >编辑</el-button>
-          <el-button
-            v-if="scope.row.name === 'superuser'"
-            disabled
-            type="danger"
-            size="small"
-            @click="handleDelete(scope.row.id)"
-          >删除</el-button>
-          <el-button
-            v-if="scope.row.name !== 'superuser'"
-            type="primary"
-            size="small"
-            @click="handleEdit(scope.row)"
-          >编辑</el-button>
-          <el-button
-            v-if="scope.row.name !== 'superuser'"
-            type="danger"
-            size="small"
-            @click="handleDelete(scope.row.id)"
-          >删除</el-button>
+          <el-button type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
+          <el-button type="danger" size="small" @click="handleDelete(scope.row.id)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <div class="pagination-container">
       <el-pagination
-        :current-page="listQuery.page+1"
+        :current-page="listQuery.page + 1"
         :page-sizes="[10,30,50]"
         :page-size="listQuery.limit"
         :total="total"
@@ -86,10 +71,30 @@
         @current-change="handleCurrentChange"
       />
     </div>
-    <el-dialog :visible.sync="roleDialogVisible" :title="dialogTitle">
-      <el-form ref="roleForm" :model="roleForm" :rules="formValidateRules" label-position="top">
-        <el-form-item label="角色名" prop="name">
-          <el-input v-model="roleForm.name"/>
+
+    <el-dialog :visible.sync="dictionaryDialogVisible" :title="dialogTitle">
+      <el-form
+        ref="dictionaryForm"
+        :model="dictionaryForm"
+        :rules="formValidateRules"
+        label-position="top"
+      >
+        <el-form-item label="父配置">
+          <el-select
+            v-model="dictionaryForm.parentName"
+            filterable
+            style="width: 100%"
+            placeholder="请选择"
+            @change="onParentSelectChange"
+          >
+            <el-option v-for="item in parents" :label="item.name" :value="item.id" :key="item.id"/>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="配置名" prop="name">
+          <el-input v-model="dictionaryForm.name"/>
+        </el-form-item>
+        <el-form-item label="配置值" prop="key">
+          <el-input v-model="dictionaryForm.key"/>
         </el-form-item>
         <el-button type="primary" style="width:100%;margin-bottom:30px;" @click="submit">提交</el-button>
       </el-form>
@@ -98,8 +103,9 @@
 </template>
 
 <script>
-import { getList, addRole, editRole, deleteRoleById, queryParentRole } from '@/api/role'
+import { getList, queryParentDictionary, addDictionary, deleteDictionaryById, updateDictionaryById } from '@/api/dictionary'
 import waves from '@/directive/waves' // 水波纹指令
+
 export default {
   name: 'UserMgr',
   directives: {
@@ -108,34 +114,44 @@ export default {
   data() {
     const validateName = (rule, value, callback) => {
       if (value.length <= 0) {
-        callback(new Error('角色名不能为空'))
+        callback(new Error('配置名不能为空'))
       } else {
         callback()
       }
     }
+
+    const validatekey = (rule, value, callback) => {
+      if (value.length <= 0) {
+        callback(new Error('配置值不能为空'))
+      } else {
+        callback()
+      }
+    }
+
     return {
       list: null,
       total: null,
       listLoading: true,
-      role: '',
       errorPath: '/errorPage/404',
       listQuery: {
         page: 0,
-        limit: 10,
-        sort: 'asc',
-        name: ''
+        pageSize: 10,
+        sort: 'asc'
       },
-      roleForm: {
+      dictionaryForm: {
         id: '',
-        name: '',
+        parentId: '',
         parentName: '',
-        parentId: ''
+        name: '',
+        key: '',
+        method: ''
       },
       formValidateRules: {
-        name: [{ required: true, trigger: 'blur', validator: validateName }]
+        name: [{ required: true, trigger: 'change', validator: validateName }],
+        key: [{ required: true, trigger: 'change', validator: validatekey }]
       },
-      roleDialogVisible: false,
-      dialogTitle: '角色配置'
+      dictionaryDialogVisible: false,
+      dialogTitle: '配置字典'
     }
   },
   created() {
@@ -167,7 +183,7 @@ export default {
             this.$message.error(error.response.data.message)
           }
         })
-      queryParentRole()
+      queryParentDictionary({ page: 0, pageSize: 100, parentId: 0 })
         .then(response => {
           this.parents = response.data.data
         })
@@ -183,25 +199,19 @@ export default {
       const parent = this.parents.find(function(item) {
         return item.id === id
       })
-      this.roleForm.parentName = parent.name
-      this.roleForm.parentId = parent.id
-    },
-    handleEdit(row) {
-      this.roleDialogVisible = true
-      this.dialogTitle = '角色修改'
-      this.roleForm = Object.assign({}, row)
-      this.$nextTick(function() {
-        this.$refs.roleForm.clearValidate() // 移除校验结果
-      })
+      this.dictionaryForm.parentName = parent.name
+      this.dictionaryForm.parentId = parent.id
     },
     submit() {
-      if (this.roleForm.method === 'add') {
-        this.$refs.roleForm.validate(valid => {
+      if (this.dictionaryForm.method === 'add') {
+        this.$refs.dictionaryForm.validate(valid => {
           if (valid) {
-            addRole(this.roleForm)
+            if (!this.dictionaryForm.parentId) {
+              this.dictionaryForm.parentId = 0
+            }
+            addDictionary(this.dictionaryForm)
               .then(response => {
-                this.roleDialogVisible = false
-                this.listloading = true
+                this.dictionaryDialogVisible = false
                 if (response.data.success) {
                   this.$message.success(response.data.msg)
                   this.getList()
@@ -219,14 +229,14 @@ export default {
           }
         })
       } else {
-        this.$refs.roleForm.validate(valid => {
+        this.$refs.dictionaryForm.validate(valid => {
           if (valid) {
-            editRole(this.roleForm)
+            updateDictionaryById(this.dictionaryForm)
               .then(response => {
-                this.roleDialogVisible = false
+                this.dictionaryDialogVisible = false
                 if (response.data.success) {
-                  this.getList()
                   this.$message.success(response.data.msg)
+                  this.getList()
                 } else {
                   this.$message.error(response.data.msg)
                 }
@@ -244,21 +254,17 @@ export default {
     },
     handleFilter() {
       this.listQuery.page = 0
-      this.listQuery.name = this.role
+      this.listQuery.name = this.dictionaryForm.name
       this.getList()
     },
-    handleSelectChange(val) {
-      this.currentRow = val
-    },
     handleDelete(id) {
-      console.info(id)
       this.$confirm('确定要删除, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       })
         .then(() => {
-          deleteRoleById({ id: id })
+          deleteDictionaryById({ id: id })
             .then(response => {
               if (response.data.success) {
                 this.$message.success(response.data.msg)
@@ -278,15 +284,27 @@ export default {
         .catch(() => {})
     },
     handleCreate() {
-      this.roleDialogVisible = true
-      this.dialogTitle = '角色新增'
-      this.roleForm = {
+      this.dictionaryDialogVisible = true
+      this.dialogTitle = '配置字典新增'
+      this.dictionaryForm = {
         id: '',
+        parentId: '',
+        parentName: '',
         name: '',
+        key: '',
         method: 'add'
       }
       this.$nextTick(function() {
-        this.$refs.roleForm.clearValidate() // 移除校验结果
+        this.$refs.dictionaryForm.clearValidate() // 移除校验结果
+      })
+    },
+    handleEdit(row) {
+      this.dictionaryDialogVisible = true
+      this.dialogTitle = '配置字典修改'
+      this.dictionaryForm = Object.assign({}, row)
+      this.dictionaryForm.method = 'edit'
+      this.$nextTick(function() {
+        this.$refs.dictionaryForm.clearValidate()
       })
     }
   }
