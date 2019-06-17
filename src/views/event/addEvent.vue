@@ -788,7 +788,6 @@ export default {
         .then(response => {
           this.handleEventGroups = response.data.data.handleEventGroups
           this.handleEventStaffs = response.data.data.handleEventStaffs
-          debugger
         })
         .catch(error => {
           if (error.response === undefined) {
