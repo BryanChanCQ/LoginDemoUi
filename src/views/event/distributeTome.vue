@@ -299,7 +299,7 @@
                         <el-option
                           v-for="item in systems"
                           :label="item.name"
-                          :value="item.id"
+                          :value="item.key"
                           :key="item.id"
                         />
                       </el-select>

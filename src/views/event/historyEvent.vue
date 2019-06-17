@@ -430,10 +430,7 @@ import waves from '@/directive/waves' // 水波纹指令
 import { getList } from '@/api/event/historyEvent'
 import {
   getUploadFileList,
-  downloadAttachmentFile,
-  queryInstitution,
-  queryDictionary,
-  getCurrentOptionResult
+  downloadAttachmentFile
 } from '@/api/event/addEvent'
 import {
   queryHandleEventDetails,
@@ -497,39 +494,6 @@ export default {
   },
   created() {
     this.getList()
-    queryInstitution()
-      .then(response => {
-        this.institutions = response.data.data
-      })
-      .catch(error => {
-        if (error.response === undefined) {
-          this.$router.push({ path: this.errorPath })
-        } else {
-          this.$message.error(error.response.data.message)
-        }
-      })
-    queryDictionary({ key: 'issuePriority' })
-      .then(response => {
-        this.priorityLevels = response.data.data
-      })
-      .catch(error => {
-        if (error.response === undefined) {
-          this.$router.push({ path: this.errorPath })
-        } else {
-          this.$message.error(error.response.data.message)
-        }
-      })
-    queryDictionary({ key: 'eventType' })
-      .then(response => {
-        this.eventTypes = response.data.data
-      })
-      .catch(error => {
-        if (error.response === undefined) {
-          this.$router.push({ path: this.errorPath })
-        } else {
-          this.$message.error(error.response.data.message)
-        }
-      })
   },
   methods: {
     getList() {
@@ -559,6 +523,7 @@ export default {
       this.eventForm = Object.assign({}, row)
       this.eventForm.method = 'edit'
       this.activeName = '事件描述'
+      debugger
       this.getUploadFileList(row.eventIdentifier, '事件描述')
       this.$nextTick(function() {
         this.$refs.eventForm.clearValidate()
@@ -626,20 +591,6 @@ export default {
       })
         .then(response => {
           this.convertUploadFileList(response.data.data)
-        })
-        .catch(error => {
-          if (error.response === undefined) {
-            this.$router.push({ path: this.errorPath })
-          } else {
-            this.$message.error(error.response.data.message)
-          }
-        })
-    },
-    getCurrentOptionResult() {
-      getCurrentOptionResult()
-        .then(response => {
-          this.handleEventGroups = response.data.data.handleEventGroups
-          this.handleEventStaffs = response.data.data.handleEventStaffs
         })
         .catch(error => {
           if (error.response === undefined) {
