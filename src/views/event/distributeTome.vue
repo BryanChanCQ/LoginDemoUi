@@ -862,7 +862,6 @@ export default {
           optimizeCategories: '',
           optimizePlan: ''
         }
-        debugger
         queryDictionary({ key: 'handleCategories' })
           .then(response => {
             this.handleCategories = response.data.data
@@ -976,7 +975,6 @@ export default {
     saveDetail() {
       this.HandleEventDetailsForm.eventIdentifier = this.eventForm.eventIdentifier
       this.HandleEventDetailsForm.eventId = this.eventForm.id
-      debugger
       saveDetail(this.HandleEventDetailsForm)
         .then(response => {
           this.$message.success(response.data.msg)

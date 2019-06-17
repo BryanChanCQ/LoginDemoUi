@@ -85,7 +85,7 @@
           >
             <el-option
               v-for="item in users"
-              :label="item.username"
+              :label="item.displayName"
               :value="item.id"
               :key="item.id"
             />
@@ -203,7 +203,7 @@ export default {
       const user = this.users.find(function(item) {
         return item.id === id
       })
-      this.userRoleForm.userName = user.username
+      this.userRoleForm.userName = user.userName
       this.userRoleForm.userId = user.id
       roleVoListForOther(this.userRoleForm).then(response => {
         this.roles = response.data.data

@@ -149,9 +149,9 @@
                   >
                     <el-option
                       v-for="item in institutions"
-                      :label="item.name"
-                      :value="item.id"
-                      :key="item.id"
+                      :label="item.branName"
+                      :value="item.branCode"
+                      :key="item.branCode"
                     />
                   </el-select>
                 </el-form-item>
@@ -219,9 +219,9 @@
                   >
                     <el-option
                       v-for="item in handleEventGroups"
-                      :label="item.name"
-                      :value="item.id"
-                      :key="item.id"
+                      :label="item.branName"
+                      :value="item.branCode"
+                      :key="item.branCode"
                     />
                   </el-select>
                 </el-form-item>
@@ -238,7 +238,7 @@
                       v-for="item in handleEventStaffs"
                       :key="item.id"
                       :label="item.displayName"
-                      :value="item.username"
+                      :value="item.userName"
                     />
                   </el-select>
                 </el-form-item>
@@ -516,7 +516,7 @@ export default {
     this.getList()
     queryInstitution()
       .then(response => {
-        this.institutions = response.data.data
+        this.institutions.push(response.data.data)
       })
       .catch(error => {
         if (error.response === undefined) {
@@ -567,16 +567,14 @@ export default {
           }
         })
     },
-    onInstitutionSelectChange(id) {
+    onInstitutionSelectChange(branCode) {
       const institution = this.institutions.find(function(item) {
-        return item.id === id
+        return item.branCode === branCode
       })
       this.handleEventGroups = []
-      queryHandleEventGroup({ institutionId: institution.id })
+      queryHandleEventGroup({ branCode: institution.branCode })
         .then(response => {
-          if (response.data.data[0] !== null) {
-            this.handleEventGroups = response.data.data
-          }
+          this.handleEventGroups.push(response.data.data)
         })
         .catch(error => {
           if (error.response === undefined) {
@@ -605,12 +603,12 @@ export default {
           }
         })
     },
-    onHandleEventGroupSelectChange(id) {
+    onHandleEventGroupSelectChange(branCode) {
       const handleEventGroup = this.handleEventGroups.find(function(item) {
-        return item.id === id
+        return item.branCode === branCode
       })
       this.handleEventGroups = []
-      queryHandleEventStaff({ handleEventGroupId: handleEventGroup.id })
+      queryHandleEventStaff({ branCode: handleEventGroup.branCode })
         .then(response => {
           this.handleEventStaffs = response.data.data
         })
@@ -643,7 +641,7 @@ export default {
           .then(() => {
             this.showEventDialog = false
           })
-          .catch(() => {})
+          .catch(() => { })
       } else {
         this.showEventDialog = false
       }
@@ -723,7 +721,7 @@ export default {
               }
             })
         })
-        .catch(() => {})
+        .catch(() => { })
     },
     handleCreate() {
       this.uploadFileList = []
@@ -790,6 +788,7 @@ export default {
         .then(response => {
           this.handleEventGroups = response.data.data.handleEventGroups
           this.handleEventStaffs = response.data.data.handleEventStaffs
+          debugger
         })
         .catch(error => {
           if (error.response === undefined) {
