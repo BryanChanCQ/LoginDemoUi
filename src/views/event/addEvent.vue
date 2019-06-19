@@ -69,7 +69,7 @@
         </el-table-column>
         <el-table-column align="center" label="状态">
           <template slot-scope="scope">
-            <span>{{ scope.row.status }}</span>
+            <span>{{ scope.row.showStatus }}</span>
           </template>
         </el-table-column>
         <el-table-column width="150%" align="center" label="操作">
@@ -87,11 +87,17 @@
               @click="handleSubmit(scope.row)"
             >提交</el-button>
             <el-button
-              v-if="scope.row.status !== 'save'"
-              type="success"
+              v-if="scope.row.status === 'submit' || scope.row.status === 'handle'"
+              type="warning"
               size="small"
               @click="closeProcess(scope.row)"
             >关闭</el-button>
+            <el-button
+              v-if="scope.row.status === 'done' || scope.row.status === 'close'"
+              type="info"
+              size="small"
+              @click="editEvent(scope.row)"
+            >查看</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -117,6 +123,7 @@
     >
       <el-button
         v-waves
+        v-if="isEdit === false"
         type="primary"
         size="small"
         class="filter-item"
@@ -129,7 +136,7 @@
             <tr>
               <th>事件编码</th>
               <td>
-                <el-form-item>
+                <el-form-item >
                   <el-input
                     :disabled="true"
                     v-model="eventForm.eventIdentifier"
@@ -139,8 +146,9 @@
               </td>
               <th>事件提出机构</th>
               <td>
-                <el-form-item prop="institution">
+                <el-form-item prop="institution" >
                   <el-select
+                    :disabled="isEdit"
                     v-model="eventForm.institution"
                     filterable
                     style="width: 100%;float:left;margin-top: 20px;"
@@ -158,8 +166,9 @@
               </td>
               <th>联系方式</th>
               <td>
-                <el-form-item prop="contact">
+                <el-form-item prop="contact" >
                   <el-input
+                    :disabled="isEdit"
                     v-model="eventForm.contact"
                     suffix-icon="el-icon-edit"
                     style="float:left;margin-top: 20px;"
@@ -168,8 +177,9 @@
               </td>
               <th>联系人</th>
               <td>
-                <el-form-item prop="eventContactor">
+                <el-form-item prop="eventContactor" >
                   <el-input
+                    :disabled="isEdit"
                     v-model="eventForm.eventContactor"
                     suffix-icon="el-icon-edit"
                     style="float:left;margin-top: 20px;"
@@ -180,8 +190,9 @@
             <tr>
               <th>事件优先级</th>
               <td>
-                <el-form-item prop="priorityLevel">
+                <el-form-item prop="priorityLevel" >
                   <el-select
+                    :disabled="isEdit"
                     v-model="eventForm.priorityLevel"
                     filterable
                     style="width: 100%;float:left;margin-top: 20px;"
@@ -198,8 +209,9 @@
               </td>
               <th>事件发生日期</th>
               <td>
-                <el-form-item prop="eventCreateDate">
+                <el-form-item prop="eventCreateDate" >
                   <el-date-picker
+                    :disabled="isEdit"
                     v-model="eventForm.eventCreateDate"
                     type="date"
                     style="float:left;margin-top: 20px;"
@@ -209,8 +221,9 @@
               </td>
               <th>事件处理组</th>
               <td>
-                <el-form-item prop="handleEventGroup">
+                <el-form-item prop="handleEventGroup" >
                   <el-select
+                    :disabled="isEdit"
                     v-model="eventForm.handleEventGroup"
                     filterable
                     style="width: 100%;float:left;margin-top: 20px;"
@@ -228,8 +241,9 @@
               </td>
               <th>事件处理人</th>
               <td>
-                <el-form-item prop="handleEventStaff">
+                <el-form-item prop="handleEventStaff" >
                   <el-select
+                    :disabled="isEdit"
                     v-model="eventForm.handleEventStaff"
                     placeholder="请选择"
                     style="float:left;margin-top: 20px;"
@@ -247,14 +261,19 @@
             <tr>
               <th>事件标题</th>
               <td colspan="3">
-                <el-form-item prop="eventTitle">
-                  <el-input v-model="eventForm.eventTitle" style="float:left;margin-top: 20px;"/>
+                <el-form-item prop="eventTitle" >
+                  <el-input
+                    :disabled="isEdit"
+                    v-model="eventForm.eventTitle"
+                    style="float:left;margin-top: 20px;"
+                  />
                 </el-form-item>
               </td>
               <th>事件类型</th>
               <td colspan="3">
-                <el-form-item prop="eventType">
+                <el-form-item prop="eventType" >
                   <el-select
+                    :disabled="isEdit"
                     v-model="eventForm.eventType"
                     placeholder="请选择"
                     style="float:left;margin-top: 20px;"
@@ -274,6 +293,7 @@
               <td colspan="7">
                 <el-form-item prop="description">
                   <el-input
+                    :disabled="isEdit"
                     v-model="eventForm.description"
                     :autosize="{ minRows: 8, maxRows: 10 }"
                     type="textarea"
@@ -291,6 +311,7 @@
                 <el-form-item>
                   <el-upload
                     ref="upload"
+                    :disabled="isEdit"
                     :headers="headers"
                     :data="uploadExtraData"
                     :auto-upload="false"
@@ -299,7 +320,7 @@
                     :on-remove="deleteUploadFile"
                     :on-preview="downloadAttachmentFile"
                     :action="findAction"
-                    :on-success="getUploadFileList"
+                    :on-success="onSuccessFileList"
                     list-type="text"
                     style="float:left;margin-top: 20px;"
                     class="upload-demo"
@@ -440,6 +461,7 @@ export default {
       eventTypes: [],
       uploadFileList: [],
       list: null,
+      isEdit: false,
       total: null,
       eventTitle: '',
       listLoading: true,
@@ -657,6 +679,7 @@ export default {
     deleteUploadFile(file, fileList) {
       deleteUploadFile({ fileUrl: file.url, id: file.id })
         .then(response => {
+          this.$message.success(response.data.msg)
           this.getUploadFileList(
             this.eventForm.eventIdentifier,
             this.eventForm.createdBy
@@ -727,6 +750,7 @@ export default {
       this.uploadFileList = []
       this.showEventDialog = true
       this.dialogTitle = '新增事件'
+      this.isEdit = false
       this.handleEventGroups = []
       this.handleEventStaffs = []
       this.eventForm = {
@@ -749,9 +773,7 @@ export default {
     },
     getUploadFileList(eventIdentifier, createdBy) {
       this.uploadFileList = []
-      if (!eventIdentifier) {
-        eventIdentifier = this.eventForm.eventIdentifier
-      }
+      eventIdentifier = this.eventForm.eventIdentifier
       if (!this.eventForm.createdBy) {
         createdBy = null
       } else {
@@ -774,9 +796,16 @@ export default {
     },
     editEvent(row) {
       this.showEventDialog = true
-      this.dialogTitle = '修改事件'
+      if (row.status !== 'save') {
+        this.dialogTitle = '查看事件'
+      } else {
+        this.dialogTitle = '修改事件'
+      }
       this.eventForm = Object.assign({}, row)
       this.eventForm.method = 'edit'
+      if (row.status !== 'save') {
+        this.isEdit = true
+      }
       this.getUploadFileList(row.eventIdentifier, row.createdBy)
       this.getCurrentOptionResult()
       this.$nextTick(function() {
@@ -786,7 +815,7 @@ export default {
     getCurrentOptionResult() {
       getCurrentOptionResult()
         .then(response => {
-          this.handleEventGroups = response.data.data.handleEventGroups
+          this.handleEventGroups.push(response.data.data.handleEventGroups)
           this.handleEventStaffs = response.data.data.handleEventStaffs
         })
         .catch(error => {
@@ -884,6 +913,30 @@ export default {
             }
           })
       })
+    },
+    onSuccessFileList(response) {
+      this.$message.success(response.msg)
+      const eventIdentifier = this.eventForm.eventIdentifier
+      let createdBy = null
+      if (!this.eventForm.createdBy) {
+        createdBy = null
+      } else {
+        createdBy = this.eventForm.createdBy
+      }
+      getUploadFileList({
+        eventIdentifier: eventIdentifier,
+        createdBy: createdBy
+      })
+        .then(response => {
+          this.convertUploadFileList(response.data.data)
+        })
+        .catch(error => {
+          if (error.response === undefined) {
+            this.$router.push({ path: this.errorPath })
+          } else {
+            this.$message.error(error.response.data.message)
+          }
+        })
     }
   }
 }

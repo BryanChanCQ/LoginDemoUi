@@ -32,7 +32,7 @@
     <div class="pagination-container">
       <el-pagination
         :current-page="listQuery.page + 1"
-        :page-sizes="[2,3,4]"
+        :page-sizes="[10,30,50]"
         :page-size="listQuery.limit"
         :total="total"
         background
@@ -105,7 +105,7 @@ export default {
       roleGroup: [],
       listQuery: {
         page: 0,
-        pageSize: 2,
+        pageSize: 10,
         sort: 'asc'
       },
       restaurants: [],

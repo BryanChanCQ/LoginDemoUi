@@ -53,7 +53,7 @@
         </el-table-column>
         <el-table-column align="center" label="状态">
           <template slot-scope="scope">
-            <span>{{ scope.row.status }}</span>
+            <span>{{ scope.row.showStatus }}</span>
           </template>
         </el-table-column>
         <el-table-column width="150%" align="center" label="操作">
@@ -418,7 +418,7 @@
                         :on-remove="deleteUploadFile"
                         :on-preview="downloadAttachmentFile"
                         :action="findAction"
-                        :on-success="getUploadFileList"
+                        :on-success="onSuccessFileList"
                         list-type="text"
                         style="float:left;margin-top: 20px;"
                         class="upload-demo"
@@ -628,9 +628,9 @@
                   >
                     <el-option
                       v-for="item in handleEventGroups"
-                      :label="item.name"
-                      :value="item.id"
-                      :key="item.id"
+                      :label="item.branName"
+                      :value="item.branCode"
+                      :key="item.branCode"
                     />
                   </el-select>
                 </el-form-item>
@@ -647,7 +647,7 @@
                     <el-option
                       v-for="item in handleEventStaffs"
                       :label="item.displayName"
-                      :value="item.name"
+                      :value="item.userName"
                       :key="item.id"
                     />
                   </el-select>
@@ -655,6 +655,18 @@
               </td>
             </tr>
           </tbody>
+          <el-button
+            v-if="handleTitle === '转办' "
+            type="success"
+            size="small"
+            @click="transferToOtherStaff"
+          >转办</el-button>
+          <el-button
+            v-if="handleTitle === '移交上级' "
+            type="success"
+            size="small"
+            @click="passToparentHandle"
+          >移交上级</el-button>
         </table>
       </el-form>
     </el-dialog>
@@ -727,7 +739,9 @@ import {
   handleEvent,
   saveDetail,
   queryHandleEventDetails,
-  queryHandleEventDetailsById
+  queryHandleEventDetailsById,
+  passToparentHandle,
+  transferToOtherStaff
 } from '@/api/event/distributeTome'
 import waves from '@/directive/waves' // 水波纹指令
 import {
@@ -829,11 +843,28 @@ export default {
       this.handleEventGroups = []
       queryHandleEventGroup({ institutionId: null, rank: 'same' }).then(
         response => {
-          if (response.data.data.length !== 0) {
-            this.handleEventGroups = response.data.data
-          }
+          this.handleEventGroups.push(response.data.data)
         }
       )
+    },
+    transferToOtherStaff() {
+      this.HandleEventDetailsForm.eventIdentifier = this.eventForm.eventIdentifier
+      this.HandleEventDetailsForm.eventId = this.eventForm.id
+      saveDetail(this.HandleEventDetailsForm).then(response => {
+        transferToOtherStaff({ userName: this.HandleEventDetailsForm.handleEventStaff, businessId: this.eventForm.id, HandleEventDetails: this.HandleEventDetailsForm })
+          .then(response => {
+            this.getList()
+            this.showHandleDialog = false
+            this.showProcessDialog = false
+          })
+          .catch(error => {
+            if (error.response === undefined) {
+              this.$router.push({ path: this.errorPath })
+            } else {
+              this.$message.error(error.response.data.message)
+            }
+          })
+      })
     },
     passToparent() {
       this.handleTitle = '移交上级'
@@ -841,11 +872,29 @@ export default {
       this.handleEventGroups = []
       queryHandleEventGroup({ institutionId: null, rank: 'parent' }).then(
         response => {
-          if (response.data.data.length !== 0) {
-            this.handleEventGroups = response.data.data
-          }
+          this.handleEventGroups.push(response.data.data)
         }
       )
+    },
+    passToparentHandle() {
+      this.code = 1
+      this.HandleEventDetailsForm.eventIdentifier = this.eventForm.eventIdentifier
+      this.HandleEventDetailsForm.eventId = this.eventForm.id
+      saveDetail(this.HandleEventDetailsForm).then(response => {
+        passToparentHandle({ code: this.code, userName: this.HandleEventDetailsForm.handleEventStaff, businessId: this.eventForm.id })
+          .then(response => {
+            this.getList()
+            this.showHandleDialog = false
+            this.showProcessDialog = false
+          })
+          .catch(error => {
+            if (error.response === undefined) {
+              this.$router.push({ path: this.errorPath })
+            } else {
+              this.$message.error(error.response.data.message)
+            }
+          })
+      })
     },
     tabClick(row) {
       if (row.label === '事件处理') {
@@ -956,11 +1005,11 @@ export default {
           })
       }
     },
-    onHandleEventGroupSelectChange(id) {
+    onHandleEventGroupSelectChange(branCode) {
       const handleEventGroup = this.handleEventGroups.find(function(item) {
-        return item.id === id
+        return item.branCode === branCode
       })
-      queryHandleEventStaff({ handleEventGroupId: handleEventGroup.id })
+      queryHandleEventStaff({ branCode: handleEventGroup.branCode })
         .then(response => {
           this.handleEventStaffs = response.data.data
         })
@@ -997,7 +1046,7 @@ export default {
       this.listLoading = true
       getList()
         .then(response => {
-          this.list = response.data
+          this.convertData(response.data.data)
           setTimeout(() => {
             this.listLoading = false
           }, 200)
@@ -1009,6 +1058,17 @@ export default {
             this.$message.error(error.response.data.message)
           }
         })
+    },
+    convertData(listData) {
+      this.convertList = []
+      for (var i = 0; i < listData.length; i++) {
+        var d = new Date(listData[i].eventCreateDate)
+        var times =
+          d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate()
+        listData[i].eventCreateDate = times
+        this.convertList.push(listData[i])
+      }
+      this.list = this.convertList
     },
     checkHistory(row) {
       queryHandleEventDetailsById({
@@ -1046,6 +1106,7 @@ export default {
     deleteUploadFile(file, fileList) {
       deleteUploadFile({ fileUrl: file.url, id: file.id })
         .then(response => {
+          this.$message.success(response.data.msg)
           this.getUploadFileList(this.eventForm.eventIdentifier, '事件处理')
         })
         .catch(error => {
@@ -1099,9 +1160,7 @@ export default {
     },
     getUploadFileList(eventIdentifier, tab) {
       this.uploadFileList = []
-      if (!eventIdentifier) {
-        eventIdentifier = this.eventForm.eventIdentifier
-      }
+      eventIdentifier = this.eventForm.eventIdentifier
       if (tab !== '事件处理' && (typeof tab === 'string') && tab.constructor === String) {
         this.createdBy = this.eventForm.createdBy
       } else {
@@ -1136,11 +1195,30 @@ export default {
       }
     },
     handle(row) {
-      this.code = 1
+      this.code = 0
       handleEvent({ code: this.code, businessId: row.id })
         .then(response => {
           this.$message.success('成功处理')
           this.getList()
+        })
+        .catch(error => {
+          if (error.response === undefined) {
+            this.$router.push({ path: this.errorPath })
+          } else {
+            this.$message.error(error.response.data.message)
+          }
+        })
+    },
+    onSuccessFileList(response) {
+      this.$message.success(response.msg)
+      const eventIdentifier = this.eventForm.eventIdentifier
+      const createdBy = null
+      getUploadFileList({
+        eventIdentifier: eventIdentifier,
+        createdBy: createdBy
+      })
+        .then(response => {
+          this.convertUploadFileList(response.data.data)
         })
         .catch(error => {
           if (error.response === undefined) {

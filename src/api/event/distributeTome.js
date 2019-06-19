@@ -39,3 +39,19 @@ export function queryHandleEventDetailsById(data) {
   })
 }
 
+export function transferToOtherStaff(data) {
+  return request({
+    url: '/Event/transferToOtherStaff',
+    method: 'get',
+    params: data
+  })
+}
+
+export function passToparentHandle(data) {
+  return request({
+    url: '/Event/passToparentHandle',
+    method: 'get',
+    params: data
+  })
+}
+

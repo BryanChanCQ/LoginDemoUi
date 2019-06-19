@@ -23,26 +23,11 @@
             </el-dropdown-item>
           </router-link>
           <el-dropdown-item divided>
-            <span style="display:block;" @click="modifyPwd">密码修改</span>
-          </el-dropdown-item>
-          <el-dropdown-item divided>
             <span style="display:block;" @click="logout">{{ $t('navbar.logOut') }}</span>
           </el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
     </div>
-
-    <el-dialog :visible.sync="pwdDialogFormVisible" :rules="formValidateRules" top="8vh" title="密码修改">
-      <el-form ref="pwdInfoForm" :model="pwdInfoForm" label-position="top">
-        <el-form-item label="新密码" prop="newPassword">
-          <el-input v-model.trim="pwdInfoForm.newPassword" type="password"/>
-        </el-form-item>
-        <el-form-item label="密码确认" prop="passwordConfirm">
-          <el-input v-model.trim="pwdInfoForm.passwordConfirm" type="password" />
-        </el-form-item>
-        <el-button type="primary" style="width:100%;margin-bottom:30px;" @click="submit">提交</el-button>
-      </el-form>
-    </el-dialog>
   </el-menu>
 </template>
 
@@ -55,7 +40,6 @@ import Screenfull from '@/components/Screenfull'
 import SizeSelect from '@/components/SizeSelect'
 import LangSelect from '@/components/LangSelect'
 import ThemePicker from '@/components/ThemePicker'
-import { editUserByName } from '@/api/user'
 import store from '@/store'
 import Gif from '@/assets/images/f778738c-e4f8-4870-b634-56703b4acafe.gif'
 export default {
@@ -70,12 +54,6 @@ export default {
   },
   data() {
     return {
-      pwdDialogFormVisible: false,
-      pwdInfoForm: {
-        newPassword: '',
-        passwordConfirm: '',
-        username: ''
-      },
       currUser: '',
       gGif: Gif
     }
@@ -96,32 +74,7 @@ export default {
     },
     logout() {
       this.$store.dispatch('LogOut').then(() => {
-        location.reload()// In order to re-instantiate the vue-router object to avoid bugs
-      })
-    },
-    modifyPwd() {
-      this.pwdDialogFormVisible = true
-    },
-    submit() {
-      if (this.pwdInfoForm.newPassword !== this.pwdInfoForm.passwordConfirm) {
-        this.$message.error('密码不匹配')
-        return
-      }
-      if (this.pwdInfoForm.newPassword === '') {
-        this.$message.error('密码不能为空')
-        return
-      }
-      this.pwdInfoForm.username = this.currUser
-      editUserByName(this.pwdInfoForm).then(response => {
-        this.pwdDialogFormVisible = false
-        if (response.data) {
-          this.$message({
-            message: '更新成功',
-            type: 'success'
-          })
-        } else {
-          this.$message.error('更新失败')
-        }
+        // location.reload()// In order to re-instantiate the vue-router object to avoid bugs
       })
     }
   }

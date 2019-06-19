@@ -60,7 +60,7 @@
         </el-table-column>
         <el-table-column align="center" label="状态">
           <template slot-scope="scope">
-            <span>{{ scope.row.status }}</span>
+            <span>{{ scope.row.showStatus }}</span>
           </template>
         </el-table-column>
         <el-table-column width="150%" align="center" label="操作">
@@ -523,7 +523,6 @@ export default {
       this.eventForm = Object.assign({}, row)
       this.eventForm.method = 'edit'
       this.activeName = '事件描述'
-      debugger
       this.getUploadFileList(row.eventIdentifier, '事件描述')
       this.$nextTick(function() {
         this.$refs.eventForm.clearValidate()

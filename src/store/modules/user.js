@@ -1,6 +1,5 @@
 import {
   loginByUsername,
-  logout,
   getCurrentUser,
   getImg
 } from '@/api/login'
@@ -143,13 +142,8 @@ const user = {
         removeToken()
       }
       return new Promise((resolve, reject) => {
-        logout().then(() => {
-          handleLogout()
-          return resolve()
-        }).catch(error => {
-          handleLogout()
-          return reject(error)
-        })
+        handleLogout()
+        location.reload()
       })
     },
 
