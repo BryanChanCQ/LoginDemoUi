@@ -157,6 +157,7 @@ function parseMenus(menus, arr, count) {
           }
           page.component = component
           page.orderNum = arr[i].orderNum
+          page.name = arr[i].name
           page.meta = {
             title: arr[i].name,
             icon: arr[i].icon
@@ -200,9 +201,6 @@ function parseMenus(menus, arr, count) {
 function addMenu(menu, menus, notAddedMenus) {
   // 顶层目录
   if (menu.parentId === 0) {
-    if (menu.name === '部署详情') {
-      menu.hidden = true
-    }
     menu.component = Layout
     menus.push(menu)
   } else {
