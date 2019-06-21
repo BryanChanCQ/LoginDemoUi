@@ -1,8 +1,9 @@
 import request from '@/utils/request'
 
-export function getList() {
+export function getList(data) {
   return request({
     url: '/Event/getHandleEventHistoryRecord',
-    method: 'get'
+    method: 'post',
+    data
   })
 }

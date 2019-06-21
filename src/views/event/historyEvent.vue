@@ -2,12 +2,12 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input
-        v-model="eventTitle"
+        v-model="histroyQuery.eventTitle"
         size="small"
         style="width: 200px;"
         class="filter-item"
         placeholder="标题"
-        @keyup.enter.native="handleFilter"
+        @keyup.enter.native="getList"
       />
       <el-button
         v-waves
@@ -15,8 +15,17 @@
         size="small"
         class="filter-item"
         icon="el-icon-search"
-        @click="handleFilter"
+        @click="getList"
       >查询</el-button>
+      <el-button
+        v-waves
+        type="primary"
+        size="small"
+        class="filter-item"
+        style="margin-left: 10px;"
+        icon="el-icon-search"
+        @click="showSearchDialog=true"
+      >高级搜索</el-button>
       <el-table
         v-loading="listLoading"
         ref="singleTable"
@@ -256,8 +265,8 @@
             >
               <el-card shadow="hover">
                 <img
-                  src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-                  class="image"
+                  :src="gGif+'?imageView2/1/w/80/h/80'"
+                  class="user-avatar"
                   style="width: 100%;"
                 >
                 <div style="padding: 14px;">
@@ -422,15 +431,126 @@
         </table>
       </el-form>
     </el-dialog>
+    <el-dialog :visible.sync="showSearchDialog" title="高级搜索">
+      <el-form
+        :model="histroyQuery"
+        inline="true"
+        label-position="right"
+        label-width="100px"
+        size="small"
+      >
+        <el-form-item label="事件类型">
+          <el-select
+            v-model="histroyQuery.eventType"
+            filterable
+            placeholder="事件类型"
+            style="width:220px"
+          >
+            <el-option
+              v-for="item in eventTypes"
+              :label="item.name"
+              :value="item.key"
+              :key="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="事件编码">
+          <el-input v-model="histroyQuery.eventIdentifier" placeholder="事件编码" style="width:220px"/>
+        </el-form-item>
+        <el-form-item label="事件标题">
+          <el-input v-model="histroyQuery.eventTitle" placeholder="事件标题" style="width:220px"/>
+        </el-form-item>
+        <el-form-item label="联系方式">
+          <el-input v-model="histroyQuery.contact" placeholder="联系方式" style="width:220px"/>
+        </el-form-item>
+        <el-form-item label="联系人">
+          <el-input v-model="histroyQuery.eventContactor" placeholder="联系人" style="width:220px"/>
+        </el-form-item>
+        <el-form-item label="提出事件机构">
+          <el-select
+            v-model="histroyQuery.institution"
+            filterable
+            placeholder="提出事件机构"
+            style="width:220px"
+          >
+            <el-option
+              v-for="item in handleEventGroups"
+              :label="item.branName"
+              :value="item.branCode"
+              :key="item.branCode"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="事件发生日期">
+          <el-date-picker v-model="histroyQuery.eventCreateDate" value-format="yyyy-MM-dd" type="date" placeholder="选择日期"/>
+        </el-form-item>
+        <el-form-item label="事件描述">
+          <el-input v-model="histroyQuery.description" placeholder="事件描述" style="width:220px"/>
+        </el-form-item>
+        <el-form-item label="事件优先级">
+          <el-select
+            v-model="histroyQuery.priorityLevel"
+            filterable
+            placeholder="事件优先级"
+            style="width:220px"
+          >
+            <el-option
+              v-for="item in priorityLevels"
+              :label="item.name"
+              :value="item.key"
+              :key="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="事件处理组">
+          <el-select
+            v-model="histroyQuery.handleEventGroup"
+            filterable
+            placeholder="事件处理组"
+            style="width:220px"
+          >
+            <el-option
+              v-for="item in handleEventGroups"
+              :label="item.branName"
+              :value="item.branCode"
+              :key="item.branCode"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="事件处理人">
+          <el-select
+            v-model="histroyQuery.handleEventStaff"
+            filterable
+            placeholder="事件处理人"
+            style="width:220px"
+          >
+            <el-option
+              v-for="item in handleEventStaffs"
+              :key="item.id"
+              :label="item.displayName"
+              :value="item.userName"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="danger" @click="resetHistroyQuery">重 置</el-button>
+        <el-button type="primary" @click="getList">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import waves from '@/directive/waves' // 水波纹指令
 import { getList } from '@/api/event/historyEvent'
+import Gif from '@/assets/images/f778738c-e4f8-4870-b634-56703b4acafe.gif'
 import {
   getUploadFileList,
-  downloadAttachmentFile
+  downloadAttachmentFile,
+  queryDictionary,
+  queryAllGroup,
+  queryAllStaff
 } from '@/api/event/addEvent'
 import {
   queryHandleEventDetails,
@@ -444,7 +564,7 @@ export default {
   data() {
     return {
       errorPath: '/errorPage/404',
-      institutions: [],
+      gGif: Gif,
       priorityLevels: [],
       handleEventGroups: [],
       handleEventStaffs: [],
@@ -458,6 +578,23 @@ export default {
       listLoading: true,
       showProcessDialog: false,
       showHistoryDialog: false,
+      showSearchDialog: false,
+      histroyQuery: {
+        assignee: '',
+        eventType: '',
+        eventIdentifier: '',
+        eventTitle: '',
+        contact: '',
+        eventContactor: '',
+        institution: '',
+        eventCreateDate: '',
+        description: '',
+        priorityLevel: '',
+        handleEventGroup: '',
+        handleEventStaff: '',
+        pageNum: 1,
+        pageSize: 10
+      },
       listQuery: {
         page: 0,
         limit: 10,
@@ -494,14 +631,59 @@ export default {
   },
   created() {
     this.getList()
+    queryDictionary({ key: 'eventType' })
+      .then(response => {
+        this.eventTypes = response.data.data
+      })
+      .catch(error => {
+        if (error.response === undefined) {
+          this.$router.push({ path: this.errorPath })
+        } else {
+          this.$message.error(error.response.data.message)
+        }
+      })
+    queryDictionary({ key: 'eventPriority' })
+      .then(response => {
+        this.priorityLevels = response.data.data
+      })
+      .catch(error => {
+        if (error.response === undefined) {
+          this.$router.push({ path: this.errorPath })
+        } else {
+          this.$message.error(error.response.data.message)
+        }
+      })
+    queryAllGroup()
+      .then(response => {
+        this.handleEventGroups = response.data.data
+      })
+      .catch(error => {
+        if (error.response === undefined) {
+          this.$router.push({ path: this.errorPath })
+        } else {
+          this.$message.error(error.response.data.message)
+        }
+      })
+    queryAllStaff()
+      .then(response => {
+        this.handleEventStaffs = response.data.data
+      })
+      .catch(error => {
+        if (error.response === undefined) {
+          this.$router.push({ path: this.errorPath })
+        } else {
+          this.$message.error(error.response.data.message)
+        }
+      })
   },
   methods: {
     getList() {
       this.listLoading = true
-      getList()
+      getList(this.histroyQuery)
         .then(response => {
-          this.convertData(response.data.data)
-          // this.total = response.data.data.page.totalElements
+          this.showSearchDialog = false
+          this.convertData(response.data.data.list)
+          this.total = response.data.data.total
           setTimeout(() => {
             this.listLoading = false
           }, 200)
@@ -540,7 +722,7 @@ export default {
       this.list = this.convertList
     },
     handleSizeChange(val) {
-      this.listQuery.limit = val - 1
+      this.histroyQuery.pageSize = val
       this.getList()
     },
     downloadAttachmentFile(file) {
@@ -566,7 +748,7 @@ export default {
       })
     },
     handleCurrentChange(val) {
-      this.listQuery.page = val - 1
+      this.histroyQuery.pageNum = val
       this.getList()
     },
     handleFilter() {
@@ -667,6 +849,24 @@ export default {
             this.$message.error(error.response.data.message)
           }
         })
+    },
+    resetHistroyQuery() {
+      this.histroyQuery = {
+        assignee: '',
+        eventType: '',
+        eventIdentifier: '',
+        eventTitle: '',
+        contact: '',
+        eventContactor: '',
+        institution: '',
+        eventCreateDate: '',
+        description: '',
+        priorityLevel: '',
+        handleEventGroup: '',
+        handleEventStaff: '',
+        pageNum: 1,
+        pageSize: 10
+      }
     }
   }
 }

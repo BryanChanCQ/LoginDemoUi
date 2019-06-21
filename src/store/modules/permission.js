@@ -70,7 +70,6 @@ const permission = {
           let menus = []
           parseMenus(menus, response.data.data, 0)
           menus = concatDashBoard(menus)
-          debugger
           console.info(menus)
           const page404 = { path: '*', redirect: '/404', hidden: true }
           menus.push(page404)

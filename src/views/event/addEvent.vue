@@ -330,16 +330,14 @@
                       type="primary"
                       icon="el-icon-check"
                       style="margin-left: 380px;"
-                      circle
                       @click="submitUpload"
-                    />
+                    >上传文件</el-button>
                     <el-button
                       slot="trigger"
                       type="primary"
                       style="margin-left: 280px;margin-top: 10px;"
                       icon="el-icon-upload"
-                      circle
-                    />
+                    >选择文件</el-button>
                   </el-upload>
                 </el-form-item>
               </td>
@@ -547,7 +545,7 @@ export default {
           this.$message.error(error.response.data.message)
         }
       })
-    queryDictionary({ key: 'issuePriority' })
+    queryDictionary({ key: 'eventPriority' })
       .then(response => {
         this.priorityLevels = response.data.data
       })

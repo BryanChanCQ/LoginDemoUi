@@ -1,9 +1,10 @@
 import request from '@/utils/request'
 
-export function getList() {
+export function getList(data) {
   return request({
     url: '/Event/find',
-    method: 'get'
+    method: 'post',
+    data
   })
 }
 

@@ -111,3 +111,17 @@ export function closeProcess(data) {
   })
 }
 
+export function queryAllGroup() {
+  return request({
+    url: '/Event/queryAllGroup',
+    method: 'get'
+  })
+}
+
+export function queryAllStaff() {
+  return request({
+    url: '/Event/queryAllStaff',
+    method: 'get'
+  })
+}
+

@@ -250,8 +250,8 @@
             >
               <el-card shadow="hover">
                 <img
-                  src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-                  class="image"
+                  :src="gGif+'?imageView2/1/w/80/h/80'"
+                  class="user-avatar"
                   style="width: 100%;"
                 >
                 <div style="padding: 14px;">
@@ -427,16 +427,16 @@
                           type="primary"
                           icon="el-icon-check"
                           style="margin-left: 380px;"
-                          circle
                           @click="submitUpload"
-                        />
+                        >上传文件
+                        </el-button>
                         <el-button
                           slot="trigger"
                           type="primary"
                           style="margin-left: 280px;margin-top: 10px;"
                           icon="el-icon-upload"
-                          circle
-                        />
+                        >选择文件
+                        </el-button>
                       </el-upload>
                     </el-form-item>
                   </td>
@@ -670,66 +670,113 @@
         </table>
       </el-form>
     </el-dialog>
-    <!-- <el-dialog :visible.sync="showSearchDialog" title="高级搜索">
-      <el-form :model="form" inline="true" label-position="left" label-width="80px" size="small">
-        <el-form-item :label-width="formLabelWidth" label="创建时间">
-          <el-date-picker v-model="value1" type="date" placeholder="选择日期"/>
+    <el-dialog :visible.sync="showSearchDialog" title="高级搜索">
+      <el-form
+        :model="distributeQuery"
+        inline="true"
+        label-position="right"
+        label-width="100px"
+        size="small"
+      >
+        <el-form-item label="事件类型">
+          <el-select
+            v-model="distributeQuery.eventType"
+            filterable
+            placeholder="事件类型"
+            style="width:220px"
+          >
+            <el-option
+              v-for="item in eventTypes"
+              :label="item.name"
+              :value="item.key"
+              :key="item.id"
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="结束时间">
-          <el-date-picker v-model="value1" type="date" placeholder="选择日期"/>
+        <el-form-item label="事件编码">
+          <el-input v-model="distributeQuery.eventIdentifier" placeholder="事件编码" style="width:220px"/>
         </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="公司">
-          <el-input v-model="eventForm.company" suffix-icon="el-icon-edit"/>
+        <el-form-item label="事件标题">
+          <el-input v-model="distributeQuery.eventTitle" placeholder="事件标题" style="width:220px"/>
         </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="报告人">
-          <el-input v-model="eventForm.company" suffix-icon="el-icon-edit"/>
+        <el-form-item label="联系方式">
+          <el-input v-model="distributeQuery.contact" placeholder="联系方式" style="width:220px"/>
         </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="分类">
-          <el-input v-model="eventForm.company" suffix-icon="el-icon-edit"/>
+        <el-form-item label="联系人">
+          <el-input v-model="distributeQuery.eventContactor" placeholder="联系人" style="width:220px"/>
         </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="处理人">
-          <el-input v-model="eventForm.company" suffix-icon="user"/>
+        <el-form-item label="提出事件机构">
+          <el-select
+            v-model="distributeQuery.institution"
+            filterable
+            placeholder="提出事件机构"
+            style="width:220px"
+          >
+            <el-option
+              v-for="item in allGroups"
+              :label="item.branName"
+              :value="item.branCode"
+              :key="item.branCode"
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="服务目录">
-          <el-input v-model="eventForm.company" suffix-icon="el-icon-edit"/>
+        <el-form-item label="事件发生日期">
+          <el-date-picker v-model="distributeQuery.eventCreateDate" value-format="yyyy-MM-dd" type="date" placeholder="选择日期"/>
         </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="编号">
-          <el-input v-model="eventForm.company" suffix-icon="el-icon-edit"/>
+        <el-form-item label="事件描述">
+          <el-input v-model="distributeQuery.description" placeholder="事件描述" style="width:220px"/>
         </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="标题">
-          <el-input v-model="eventForm.company" suffix-icon="el-icon-edit"/>
+        <el-form-item label="事件优先级">
+          <el-select
+            v-model="distributeQuery.priorityLevel"
+            filterable
+            placeholder="事件优先级"
+            style="width:220px"
+          >
+            <el-option
+              v-for="item in priorityLevels"
+              :label="item.name"
+              :value="item.key"
+              :key="item.id"
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="标签">
-          <el-input v-model="eventForm.company" suffix-icon="el-icon-edit"/>
+        <el-form-item label="事件处理组">
+          <el-select
+            v-model="distributeQuery.handleEventGroup"
+            filterable
+            placeholder="事件处理组"
+            style="width:220px"
+          >
+            <el-option
+              v-for="item in allGroups"
+              :label="item.branName"
+              :value="item.branCode"
+              :key="item.branCode"
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="描述">
-          <el-input v-model="eventForm.company" suffix-icon="el-icon-edit"/>
-        </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="状态">
-          <el-input v-model="eventForm.company" suffix-icon="el-icon-edit"/>
-        </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="问题来源">
-          <el-input v-model="eventForm.company" suffix-icon="el-icon-edit"/>
-        </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="影响范围">
-          <el-input v-model="eventForm.company" suffix-icon="el-icon-edit"/>
-        </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="优先级">
-          <el-input v-model="eventForm.company" suffix-icon="el-icon-edit"/>
-        </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="紧急度">
-          <el-input v-model="eventForm.company" suffix-icon="el-icon-edit"/>
-        </el-form-item>
-        <el-form-item :label-width="formLabelWidth" label="处理组">
-          <el-input v-model="eventForm.company" suffix-icon="el-icon-edit"/>
+        <el-form-item label="事件处理人">
+          <el-select
+            v-model="distributeQuery.handleEventStaff"
+            filterable
+            placeholder="事件处理人"
+            style="width:220px"
+          >
+            <el-option
+              v-for="item in allStaffs"
+              :key="item.id"
+              :label="item.displayName"
+              :value="item.userName"
+            />
+          </el-select>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="danger" @click="showSearchDialog = false">重 置</el-button>
-        <el-button @click="showSearchDialog = false">取 消</el-button>
-        <el-button type="primary" @click="showSearchDialog = false">确 定</el-button>
+        <el-button type="danger" @click="resetDistributeQuery">重 置</el-button>
+        <el-button type="primary" @click="getList">确 定</el-button>
       </div>
-    </el-dialog>-->
+    </el-dialog>
   </div>
 </template>
 
@@ -744,13 +791,17 @@ import {
   transferToOtherStaff
 } from '@/api/event/distributeTome'
 import waves from '@/directive/waves' // 水波纹指令
+import Gif from '@/assets/images/f778738c-e4f8-4870-b634-56703b4acafe.gif'
 import {
   getUploadFileList,
   downloadAttachmentFile,
   queryHandleEventGroup,
   deleteUploadFile,
   queryHandleEventStaff,
-  queryDictionary
+  queryDictionary,
+  queryAllGroup,
+  queryAllStaff
+
 } from '@/api/event/addEvent'
 import addEvent from '@/views/event/addEvent'
 import Cookies from 'js-cookie'
@@ -766,6 +817,7 @@ export default {
     return {
       handleTabs: [],
       errorPath: '/errorPage/404',
+      gGif: Gif,
       list: null,
       findAction: process.env.BASE_API + '/Event/uploadAttachmentFile',
       showSearchDialog: false,
@@ -785,6 +837,10 @@ export default {
       systems: [],
       testCovers: [],
       optimizeCategories: [],
+      priorityLevels: [],
+      eventTypes: [],
+      allGroups: [],
+      allStaffs: [],
       headers: {
         jwtHeader: Cookies.get('jwtHeader')
       },
@@ -795,6 +851,22 @@ export default {
         page: 0,
         pageSize: 100,
         sort: 'asc'
+      },
+      distributeQuery: {
+        assignee: '',
+        eventType: '',
+        eventIdentifier: '',
+        eventTitle: '',
+        contact: '',
+        eventContactor: '',
+        institution: '',
+        eventCreateDate: '',
+        description: '',
+        priorityLevel: '',
+        handleEventGroup: '',
+        handleEventStaff: '',
+        pageNum: 1,
+        pageSize: 10
       },
       eventForm: {
         eventIdentifier: '',
@@ -827,14 +899,58 @@ export default {
   },
   created() {
     this.getList()
+    queryDictionary({ key: 'eventType' })
+      .then(response => {
+        this.eventTypes = response.data.data
+      })
+      .catch(error => {
+        if (error.response === undefined) {
+          this.$router.push({ path: this.errorPath })
+        } else {
+          this.$message.error(error.response.data.message)
+        }
+      })
+    queryDictionary({ key: 'eventPriority' })
+      .then(response => {
+        this.priorityLevels = response.data.data
+      })
+      .catch(error => {
+        if (error.response === undefined) {
+          this.$router.push({ path: this.errorPath })
+        } else {
+          this.$message.error(error.response.data.message)
+        }
+      })
+    queryAllGroup()
+      .then(response => {
+        this.allGroups = response.data.data
+      })
+      .catch(error => {
+        if (error.response === undefined) {
+          this.$router.push({ path: this.errorPath })
+        } else {
+          this.$message.error(error.response.data.message)
+        }
+      })
+    queryAllStaff()
+      .then(response => {
+        this.allStaffs = response.data.data
+      })
+      .catch(error => {
+        if (error.response === undefined) {
+          this.$router.push({ path: this.errorPath })
+        } else {
+          this.$message.error(error.response.data.message)
+        }
+      })
   },
   methods: {
     handleSizeChange(val) {
-      this.listQuery.limit = val
+      this.distributeQuery.pageSize = val
       this.getList()
     },
     handleCurrentChange(val) {
-      this.listQuery.page = val
+      this.distributeQuery.pageNum = val
       this.getList()
     },
     transfer() {
@@ -1044,9 +1160,11 @@ export default {
     },
     getList() {
       this.listLoading = true
-      getList()
+      getList(this.distributeQuery)
         .then(response => {
-          this.convertData(response.data.data)
+          this.showSearchDialog = false
+          this.convertData(response.data.data.list)
+          this.total = response.data.data.total
           setTimeout(() => {
             this.listLoading = false
           }, 200)
@@ -1227,6 +1345,24 @@ export default {
             this.$message.error(error.response.data.message)
           }
         })
+    },
+    resetDistributeQuery() {
+      this.distributeQuery = {
+        assignee: '',
+        eventType: '',
+        eventIdentifier: '',
+        eventTitle: '',
+        contact: '',
+        eventContactor: '',
+        institution: '',
+        eventCreateDate: '',
+        description: '',
+        priorityLevel: '',
+        handleEventGroup: '',
+        handleEventStaff: '',
+        pageNum: 1,
+        pageSize: 10
+      }
     }
   }
 }
